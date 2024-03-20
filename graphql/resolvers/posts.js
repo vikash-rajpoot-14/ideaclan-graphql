@@ -86,13 +86,14 @@ module.exports = {
 
     //CREATE A NEW POST
     async createPost(_, { body }, context) {
-
+     try {
+      
       const user = checkAuth(context);
 
       if (body.trim() === '') {
         throw new GraphQLError(`Post body must not be empty`, {
           extensions: {
-            code: err.message,
+          code: "USER_INPUT_ERROR",
             statusCode : 400,
           },
         });
@@ -108,6 +109,14 @@ module.exports = {
       const post = await newPost.save();
 
       return post;
+    } catch (error) {
+      throw new GraphQLError(Object.values(error).join(", "), {
+        extensions: {
+        code: "USER_INPUT_ERROR",
+          statusCode : 400,
+        },
+      });
+     }
     },
 
 // DELETING POST
