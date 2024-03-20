@@ -7,7 +7,6 @@ const postSchema = new Schema({
   },
   username: {
     type: String,
-    unique: true,
     required: {
       values: true,
       message: "please provide your name",

@@ -6,6 +6,7 @@ const { ApolloServer } = require("@apollo/server");
 const { expressMiddleware } = require("@apollo/server/express4");
 const { ApolloServerPluginDrainHttpServer } = require('@apollo/server/plugin/drainHttpServer');
 const http = require('http')
+const { GraphQLError }= require('graphql');
 
 dotenv.config({ path: "./config.env" });
 const app = express();
@@ -22,7 +23,6 @@ async function startServer() {
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
   
 });
@@ -33,7 +33,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/",(req,res)=>{
-  res.send(`api is running to test endpoint use graphql as endpoint`);
+  return res.send(`api is running ... to test endpoint use graphql as endpoint`);
 })
 
 app.use(
@@ -54,6 +54,12 @@ app.use(
     })
     .catch((err) => {
       console.log("error while connecting to DB" + err);
+      throw new GraphQLError("error while connecting to DB", {
+        extensions: {
+          code: err.message || "INTERNAL SERVER ERROR",
+          statusCode: err.statusCode || 500,
+        },
+      });
     });
 }
 

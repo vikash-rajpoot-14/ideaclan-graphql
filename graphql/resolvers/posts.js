@@ -5,14 +5,14 @@ const User = require('../../models/User');
 
 module.exports = {
   Query: {
+
+    //GET ALL POSTS
     async getAllPosts(){
-      try {
         const posts = await Post.find().sort({ createdAt: -1 });
         return posts;
-      } catch (err) {
-        throw new Error(err);
-      }
     },
+
+    //GET USER OWN POSTS
     async getOwnPosts(_,args,context) {
         const user = checkAuth(context);
          const username = user.username;
@@ -20,25 +20,44 @@ module.exports = {
         const posts = await Post.find({ username }).sort({ createdAt: -1 });
         return posts;
       } catch (err) {
-        throw new Error(err);
+        throw new GraphQLError(`${Object.values(err).join(",")}`, {
+          extensions: {
+            code: err.message,
+            statusCode: 400,
+          },
+        });
       }
     },
-    async getPost(_, { postId }) {
 
+    // GET A POST
+    async getPost(_, { postId }) {
       try {
         const post = await Post.findById(postId);
         if (post) {
           return post;
         } else {
-          throw new Error('Post not found');
+          throw new GraphQLError("Post Not Found", {
+            extensions: {
+              code: err.message,
+              statusCode : 404,
+            },
+          });
         }
       } catch (err) {
-        throw new Error(err);
+        throw new GraphQLError(`${Object.values(err).join(",")}`, {
+          extensions: {
+            code: err.message,
+            statusCode : 400,
+          },
+        });
       }
     },
+
+    //POSTS OF THOSE USERS, USER FOLLOW
     async getPostOfFollowers(_,args,context){
         const user = checkAuth(context);
         const username = user.username;
+        try{
         const followeduser = await User.findOne({username}).populate('follow').select('follow');
         let post = [];
         for(let userObj of followeduser.follow) {
@@ -50,15 +69,33 @@ module.exports = {
           });
 
         return sortedPosts ;
+        
+      }catch(err){
+        throw new GraphQLError(`${Object.values(err).join(",")}`, {
+          extensions: {
+            code: err.message,
+            statusCode : 400,
+          },
+        });
+      }
     }
   },
+
+  //MUTATION
   Mutation: {
+
+    //CREATE A NEW POST
     async createPost(_, { body }, context) {
 
       const user = checkAuth(context);
 
       if (body.trim() === '') {
-        throw new Error('Post body must not be empty');
+        throw new GraphQLError(`Post body must not be empty`, {
+          extensions: {
+            code: err.message,
+            statusCode : 400,
+          },
+        });
       }
 
       const newPost = new Post({
@@ -72,12 +109,21 @@ module.exports = {
 
       return post;
     },
+
 // DELETING POST
     async deletePost(_, { postId }, context) {
       const user = checkAuth(context);
 
       try {
         const post = await Post.findById(postId);
+        if(!post){
+          throw new GraphQLError(`Post does not exist anymore`, {
+            extensions: {
+              code: err.message,
+              statusCode : 404
+            },
+          });
+        }
         if (user.username === post.username) {
           await Post.findByIdAndDelete(postId);
           return 'Post deleted successfully';
@@ -85,6 +131,7 @@ module.exports = {
             throw new GraphQLError("Action not allowed", {
                 extensions: {
                     code: 'USER_INPUT_ERROR',
+                    statusCode : 400
                 },
             });
         }
@@ -92,6 +139,7 @@ module.exports = {
         throw new GraphQLError(err, {
             extensions: {
                 code: `error while deleting post ${err.message}`,
+                statusCode : 400
             },
         });
 
