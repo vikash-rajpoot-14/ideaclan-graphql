@@ -32,6 +32,9 @@ await server.start();
 app.use(cors());
 app.use(express.json());
 
+app.get("/",(req,res)=>{
+  res.send(`api is running to test endpoint use graphql as endpoint`);
+})
 
 app.use(
   '/',
