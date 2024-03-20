@@ -6,7 +6,6 @@ mutation loginUser {
       username
       email
       token
-      
     }
 }
 
@@ -16,7 +15,6 @@ mutation createUser {
       username
       email
       token
-      
     }
 }
 
